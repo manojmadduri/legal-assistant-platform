@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { auth } from '../config/firebase';
-import toast from 'react-hot-toast';
+import CustomToast from '../components/CustomToast';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
@@ -38,30 +38,45 @@ api.interceptors.response.use(
     console.error('API Error:', error);
     
     if (!error.response) {
-      toast.error('Network error. Please check your connection.');
+      CustomToast.error('Network error. Please check your connection.');
       return Promise.reject(new Error('Network error'));
     }
+
+    // Don't show error messages for 404 errors - let the components handle these
+    if (error.response.status === 404) {
+      return Promise.reject(error);
+    }
+
+    const errorMessage = error.response.data?.error || error.response.data?.message || 'An error occurred';
 
     switch (error.response.status) {
       case 401:
         // Handle unauthorized error
-        toast.error('Session expired. Please login again.');
-        window.location.href = '/login';
+        if (!window.location.pathname.includes('/login')) {
+          CustomToast.error('Session expired. Please login again.');
+          // Add a small delay before redirect to ensure the user sees the message
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 1500);
+        }
         break;
       case 403:
-        toast.error('Access denied. You do not have permission.');
-        break;
-      case 404:
-        toast.error('Resource not found.');
+        CustomToast.error('You do not have permission to perform this action.');
         break;
       case 422:
-        toast.error(error.response.data.error || 'Validation error.');
+        CustomToast.error('Invalid data provided.');
+        break;
+      case 429:
+        CustomToast.error('Too many requests. Please try again later.');
         break;
       case 500:
-        toast.error('Server error. Please try again later.');
+      case 502:
+      case 503:
+      case 504:
+        CustomToast.error('Server error. Please try again later.');
         break;
       default:
-        toast.error(error.response.data.error || 'An error occurred. Please try again.');
+        CustomToast.error(errorMessage);
     }
 
     return Promise.reject(error);

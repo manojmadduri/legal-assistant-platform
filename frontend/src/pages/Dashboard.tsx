@@ -8,7 +8,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
-import toast from 'react-hot-toast';
+import CustomToast from '../components/CustomToast';
 
 interface DashboardStats {
   totalDocuments: number;
@@ -43,6 +43,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true);
       const [statsResponse, activityResponse] = await Promise.all([
         api.get('/dashboard/stats'),
         api.get('/dashboard/activity'),
@@ -52,7 +53,13 @@ const Dashboard = () => {
       setRecentActivity(activityResponse.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      setStats({
+        totalDocuments: 0,
+        pendingReviews: 0,
+        upcomingDeadlines: 0,
+        complianceIssues: 0,
+      });
+      setRecentActivity([]);
     } finally {
       setLoading(false);
     }

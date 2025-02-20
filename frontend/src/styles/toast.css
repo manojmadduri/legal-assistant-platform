@@ -1,0 +1,63 @@
+.toast-clickable {
+  cursor: pointer !important;
+}
+
+.toast-clickable:hover {
+  opacity: 0.9;
+}
+
+.toast-close-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin-left: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toast-close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.toast-close-button:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.error-toast {
+  position: relative !important;
+}
+
+.error-toast > button {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: none !important;
+  border: none !important;
+  color: white !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  padding: 4px 8px !important;
+  opacity: 0.8 !important;
+  transition: opacity 0.2s !important;
+  border-radius: 4px !important;
+}
+
+.error-toast > button:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.error-toast > button:active {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Ensure the toast content doesn't overlap with the close button */
+.error-toast > div {
+  padding-right: 32px !important;
+}

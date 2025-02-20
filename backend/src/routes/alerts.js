@@ -1,15 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { LegalAlert } = require('../models');
-const { auth } = require('../middleware/auth');
-const { Queue } = require('bullmq');
-
-const alertQueue = new Queue('legal-alerts', {
-  connection: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379')
-  }
-});
+const auth = require('../middleware/auth');
 
 // Get all alerts for a user
 router.get('/', auth, async (req, res) => {
@@ -39,39 +31,27 @@ router.post('/', auth, async (req, res) => {
       status: 'PENDING'
     });
 
-    // Add reminder to the queue
-    await alertQueue.add('reminder', {
-      alertId: alert.id,
-      userId: req.user.id,
-      title,
-      dueDate
-    }, {
-      delay: new Date(dueDate).getTime() - Date.now() - (24 * 60 * 60 * 1000) // 1 day before due date
-    });
-
-    res.json(alert);
+    res.status(201).json(alert);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Update alert status
-router.patch('/:id', auth, async (req, res) => {
+// Update an alert
+router.put('/:id', auth, async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-
     const alert = await LegalAlert.findOne({
-      where: { id, userId: req.user.id }
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
     });
 
     if (!alert) {
       return res.status(404).json({ error: 'Alert not found' });
     }
 
-    alert.status = status;
-    await alert.save();
-
+    await alert.update(req.body);
     res.json(alert);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -81,10 +61,11 @@ router.patch('/:id', auth, async (req, res) => {
 // Delete an alert
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const { id } = req.params;
-
     const alert = await LegalAlert.findOne({
-      where: { id, userId: req.user.id }
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
     });
 
     if (!alert) {
@@ -92,7 +73,7 @@ router.delete('/:id', auth, async (req, res) => {
     }
 
     await alert.destroy();
-    res.json({ message: 'Alert deleted successfully' });
+    res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

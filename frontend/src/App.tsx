@@ -12,6 +12,7 @@ import Documents from './pages/Documents';
 import Compliance from './pages/Compliance';
 import Alerts from './pages/Alerts';
 import Settings from './pages/Settings';
+import './styles/toast.css';
 
 const App = () => {
   return (
@@ -20,26 +21,11 @@ const App = () => {
         <AuthProvider>
           <Toaster
             position="top-right"
-            toastOptions={{
-              duration: 5000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: '#68D391',
-                  secondary: '#fff',
-                },
-              },
-              error: {
-                duration: 4000,
-                iconTheme: {
-                  primary: '#F56565',
-                  secondary: '#fff',
-                },
-              },
+            reverseOrder={false}
+            gutter={8}
+            containerStyle={{
+              top: 20,
+              right: 20,
             }}
           />
           <Routes>

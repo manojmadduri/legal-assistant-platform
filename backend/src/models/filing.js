@@ -1,13 +1,16 @@
-const { Model } = require('sequelize');
+const { Model, DataTypes } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize) => {
   class Filing extends Model {
     static associate(models) {
-      Filing.belongsTo(models.User, { foreignKey: 'userId' });
+      Filing.belongsTo(models.User, {
+        foreignKey: 'userId',
+        onDelete: 'CASCADE'
+      });
       Filing.belongsTo(models.Document, { foreignKey: 'documentId' });
     }
   }
-  
+
   Filing.init({
     id: {
       type: DataTypes.UUID,
@@ -16,15 +19,22 @@ module.exports = (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
     },
     documentId: {
       type: DataTypes.UUID,
-      allowNull: true
+      allowNull: true,
+      references: {
+        model: 'Documents',
+        key: 'id'
+      }
     },
     filingType: {
-      type: DataTypes.ENUM,
-      values: ['TRADEMARK', 'PATENT', 'COPYRIGHT', 'BUSINESS_REGISTRATION', 'OTHER'],
+      type: DataTypes.ENUM('TRADEMARK', 'PATENT', 'COPYRIGHT', 'BUSINESS_REGISTRATION', 'OTHER'),
       allowNull: false
     },
     jurisdiction: {
@@ -32,8 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     status: {
-      type: DataTypes.ENUM,
-      values: ['DRAFT', 'PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED'],
+      type: DataTypes.ENUM('DRAFT', 'PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED'),
       defaultValue: 'DRAFT'
     },
     filingDate: {
@@ -44,26 +53,27 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true
     },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true
+    filingNumber: {
+      type: DataTypes.STRING,
+      unique: true
+    },
+    fees: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0
+    },
+    notes: {
+      type: DataTypes.TEXT
     },
     metadata: {
       type: DataTypes.JSONB,
       defaultValue: {}
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false
     }
   }, {
     sequelize,
     modelName: 'Filing',
-    tableName: 'filings'
+    tableName: 'Filings',
+    timestamps: true,
+    paranoid: true
   });
 
   return Filing;

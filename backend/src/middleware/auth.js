@@ -1,4 +1,4 @@
-const admin = require('firebase-admin');
+const admin = require('../config/firebase');
 
 const auth = async (req, res, next) => {
   try {
@@ -13,7 +13,7 @@ const auth = async (req, res, next) => {
     req.user = {
       id: decodedToken.uid,
       email: decodedToken.email,
-      // Add any other user info you need
+      role: decodedToken.role || 'CLIENT'
     };
     
     next();
@@ -23,4 +23,4 @@ const auth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth };
+module.exports = auth;

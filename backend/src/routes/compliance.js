@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { ComplianceCheck } = require('../models');
-const { auth } = require('../middleware/auth');
+const { ComplianceCheck, Document } = require('../models');
+const auth = require('../middleware/auth');
 
 // Get all compliance checks for a user
 router.get('/', auth, async (req, res) => {

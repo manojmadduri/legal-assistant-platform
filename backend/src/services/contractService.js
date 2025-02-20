@@ -49,18 +49,25 @@ class ContractService {
         - Services: ${parameters.services.join(', ')}
         - Payment Terms: ${parameters.paymentTerms}
         - Duration: ${parameters.duration}`,
-      
       'nda': `Create a non-disclosure agreement with the following details:
-        - Disclosing Party: ${parameters.disclosingParty}
-        - Receiving Party: ${parameters.receivingParty}
+        - Parties: ${parameters.parties.join(' and ')}
         - Purpose: ${parameters.purpose}
         - Duration: ${parameters.duration}
         - Jurisdiction: ${parameters.jurisdiction}`,
-      
-      // Add more contract types as needed
+      'employment': `Create an employment contract with the following details:
+        - Employer: ${parameters.employer}
+        - Employee: ${parameters.employee}
+        - Position: ${parameters.position}
+        - Salary: ${parameters.salary}
+        - Start Date: ${parameters.startDate}
+        - Benefits: ${parameters.benefits.join(', ')}`,
     };
 
-    return prompts[type] || throw new Error('Unsupported contract type');
+    if (!prompts[type]) {
+      throw new Error('Unsupported contract type');
+    }
+
+    return prompts[type];
   }
 
   async generateContractSummary(contractContent) {

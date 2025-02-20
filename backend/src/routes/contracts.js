@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const { Contract } = require('../models');
+const auth = require('../middleware/auth');
 const contractService = require('../services/contractService');
 const { validateContract } = require('../middleware/validation');
 
 // Get all contracts for a user
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const contracts = await Contract.findAll({
       where: { userId: req.user.uid },
@@ -18,7 +20,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get a specific contract
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const contract = await Contract.findOne({
       where: {
@@ -39,7 +41,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Generate a new contract
-router.post('/generate', validateContract, async (req, res) => {
+router.post('/generate', auth, validateContract, async (req, res) => {
   try {
     const { type, parameters } = req.body;
     const generatedContract = await contractService.generateContract(type, parameters);
@@ -51,7 +53,7 @@ router.post('/generate', validateContract, async (req, res) => {
 });
 
 // Save a contract
-router.post('/', validateContract, async (req, res) => {
+router.post('/', auth, validateContract, async (req, res) => {
   try {
     const contract = await contractService.saveContract(req.user.uid, req.body);
     res.status(201).json(contract);
@@ -62,7 +64,7 @@ router.post('/', validateContract, async (req, res) => {
 });
 
 // Update a contract
-router.put('/:id', validateContract, async (req, res) => {
+router.put('/:id', auth, validateContract, async (req, res) => {
   try {
     const contract = await Contract.findOne({
       where: {
@@ -84,7 +86,7 @@ router.put('/:id', validateContract, async (req, res) => {
 });
 
 // Review a contract
-router.post('/:id/review', async (req, res) => {
+router.post('/:id/review', auth, async (req, res) => {
   try {
     const review = await contractService.reviewContract(req.params.id);
     res.json(review);
@@ -95,7 +97,7 @@ router.post('/:id/review', async (req, res) => {
 });
 
 // Delete a contract
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const contract = await Contract.findOne({
       where: {

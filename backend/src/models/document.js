@@ -4,14 +4,17 @@ const sequelize = require('../config/database');
 module.exports = (sequelize) => {
   class Document extends Model {
     static associate(models) {
-      Document.belongsTo(models.User, { foreignKey: 'userId' });
+      Document.belongsTo(models.User, {
+        foreignKey: 'userId',
+        onDelete: 'CASCADE'
+      });
       Document.belongsToMany(models.ComplianceCheck, {
         through: 'DocumentCompliance',
         as: 'complianceChecks'
       });
     }
   }
-  
+
   Document.init({
     id: {
       type: DataTypes.UUID,
@@ -28,88 +31,78 @@ module.exports = (sequelize) => {
     },
     title: {
       type: DataTypes.STRING,
-      allowNull: false
-    },
-    description: {
-      type: DataTypes.TEXT
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
     },
     type: {
-      type: DataTypes.ENUM,
-      values: ['CONTRACT', 'COMPLIANCE', 'IP_FILING', 'LEGAL_MEMO', 'COURT_FILING', 'OTHER'],
+      type: DataTypes.ENUM('CONTRACT', 'COMPLIANCE', 'IP_FILING', 'LEGAL_MEMO', 'COURT_FILING', 'OTHER'),
       allowNull: false
     },
-    status: {
-      type: DataTypes.ENUM,
-      values: ['DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'EXPIRED'],
-      defaultValue: 'DRAFT'
-    },
-    category: {
-      type: DataTypes.STRING
-    },
-    tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      defaultValue: []
-    },
-    version: {
-      type: DataTypes.STRING,
-      defaultValue: '1.0'
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: ''
     },
     fileUrl: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     fileName: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     fileType: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     fileSize: {
       type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    status: {
+      type: DataTypes.ENUM('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'EXPIRED'),
+      defaultValue: 'DRAFT',
       allowNull: false
-    },
-    expiryDate: {
-      type: DataTypes.DATE
-    },
-    reviewDate: {
-      type: DataTypes.DATE
-    },
-    reviewedBy: {
-      type: DataTypes.STRING,
-      references: {
-        model: 'Users',
-        key: 'id'
-      }
-    },
-    reviewNotes: {
-      type: DataTypes.TEXT
     },
     metadata: {
       type: DataTypes.JSONB,
-      defaultValue: {}
+      defaultValue: {},
+      allowNull: false
     },
-    isTemplate: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    visibility: {
-      type: DataTypes.ENUM,
-      values: ['PUBLIC', 'PRIVATE', 'TEAM'],
-      defaultValue: 'PRIVATE'
-    },
-    lastAccessed: {
-      type: DataTypes.DATE
-    },
-    accessCount: {
+    version: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 1,
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    tags: {
+      type: DataTypes.JSONB,
+      defaultValue: [],
+      allowNull: false
+    },
+    dueDate: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    lastReviewedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    lastReviewedBy: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     sequelize,
     modelName: 'Document',
+    tableName: 'Documents',
     timestamps: true,
+    paranoid: true,
     indexes: [
       {
         fields: ['userId']
@@ -121,10 +114,10 @@ module.exports = (sequelize) => {
         fields: ['status']
       },
       {
-        fields: ['category']
+        fields: ['createdAt']
       }
     ]
   });
-  
+
   return Document;
 };

@@ -1,10 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const Document = require('../models/Document');
-const ComplianceCheck = require('../models/ComplianceCheck');
-const LegalAlert = require('../models/LegalAlert');
-const { auth } = require('../middleware/auth');
+const { User, Document, ComplianceCheck, LegalAlert } = require('../models');
+const auth = require('../middleware/auth');
 const { admin } = require('../config/firebase-admin');
 
 // Register new user
@@ -166,8 +163,28 @@ router.put('/profile/:id', auth, async (req, res) => {
   }
 });
 
-// Get user dashboard stats
+// Get user statistics
 router.get('/stats', auth, async (req, res) => {
+  try {
+    const [documents, complianceChecks, alerts] = await Promise.all([
+      Document.count({ where: { userId: req.user.id } }),
+      ComplianceCheck.count({ where: { userId: req.user.id } }),
+      LegalAlert.count({ where: { userId: req.user.id } })
+    ]);
+
+    res.json({
+      documents,
+      complianceChecks,
+      alerts
+    });
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user dashboard stats
+router.get('/dashboard-stats', auth, async (req, res) => {
   try {
     // Initialize empty stats object with default values
     const stats = {

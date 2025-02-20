@@ -2,12 +2,54 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-const { sequelize } = require('./models');
+const { Sequelize, DataTypes } = require('sequelize');
+
+// Database configuration
+const sequelize = new Sequelize({
+  username: process.env.DB_USERNAME || 'postgres',
+  password: process.env.DB_PASSWORD || 'password',
+  database: process.env.DB_NAME || 'legal_assistant',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  dialect: 'postgres',
+  logging: false
+});
+
+// Define User model
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  role: {
+    type: DataTypes.ENUM('ADMIN', 'LAWYER', 'CLIENT'),
+    defaultValue: 'CLIENT',
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED'),
+    defaultValue: 'ACTIVE',
+    allowNull: false
+  }
+}, {
+  tableName: 'Users'
+});
+
+// Make User model available globally
+global.User = User;
 
 // Import routes
 const documentsRouter = require('./routes/documents');
-const complianceRouter = require('./routes/compliance');
-const dashboardRouter = require('./routes/dashboard');
 const authRouter = require('./routes/auth');
 
 const app = express();
@@ -31,68 +73,30 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsPath = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
-// Ensure uploads directory exists
-const fs = require('fs');
-if (!fs.existsSync(uploadsPath)) {
-  fs.mkdirSync(uploadsPath, { recursive: true });
-}
-
 // Routes
-app.use('/api/documents', documentsRouter);
-app.use('/api/compliance', complianceRouter);
-app.use('/api/dashboard', dashboardRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/documents', documentsRouter);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Global error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-
-  // Handle multer errors
-  if (err.name === 'MulterError') {
-    return res.status(400).json({
-      error: err.message || 'Error uploading file'
-    });
-  }
-
-  // Handle validation errors
-  if (err.name === 'ValidationError' || err.name === 'SequelizeValidationError') {
-    return res.status(422).json({
-      error: err.message
-    });
-  }
-
-  // Handle unauthorized errors
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({
-      error: 'Invalid token or session expired'
-    });
-  }
-
-  // Default error
-  res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'production' 
-      ? 'An unexpected error occurred' 
-      : err.message
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error'
   });
 });
 
-// Handle 404 errors
-app.use((req, res) => {
-  res.status(404).json({ error: 'Resource not found' });
-});
+// Start server
+const PORT = process.env.PORT || 3000;
 
-// Database connection and server start
-const PORT = process.env.PORT || 3001;
-
-const startServer = async () => {
+async function startServer() {
   try {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
+    
+    // Sync database
+    await sequelize.sync();
+    console.log('Database synced successfully.');
     
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
@@ -101,8 +105,6 @@ const startServer = async () => {
     console.error('Unable to start server:', error);
     process.exit(1);
   }
-};
+}
 
 startServer();
-
-module.exports = app;

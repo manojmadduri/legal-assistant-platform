@@ -2,16 +2,25 @@ const express = require('express');
 const router = express.Router();
 const { Filing, Document } = require('../models');
 const auth = require('../middleware/auth');
-const { body, validationResult } = require('express-validator');
+const Joi = require('joi');
+
+// Validation schema
+const filingSchema = Joi.object({
+  filingType: Joi.string().valid('TRADEMARK', 'PATENT', 'COPYRIGHT', 'BUSINESS_REGISTRATION', 'OTHER').required(),
+  jurisdiction: Joi.string().required(),
+  description: Joi.string().optional(),
+  dueDate: Joi.date().iso().optional(),
+  documentId: Joi.string().uuid().optional()
+});
 
 // Validation middleware
-const validateFiling = [
-  body('filingType').isIn(['TRADEMARK', 'PATENT', 'COPYRIGHT', 'BUSINESS_REGISTRATION', 'OTHER']),
-  body('jurisdiction').notEmpty(),
-  body('description').optional(),
-  body('dueDate').optional().isISO8601(),
-  body('documentId').optional().isUUID()
-];
+const validateFiling = (req, res, next) => {
+  const { error } = filingSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
+  next();
+};
 
 // Get all filings for a user
 router.get('/', auth, async (req, res) => {
@@ -51,11 +60,6 @@ router.get('/:id', auth, async (req, res) => {
 // Create a new filing
 router.post('/', auth, validateFiling, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const filing = await Filing.create({
       ...req.body,
       userId: req.user.id,
@@ -71,11 +75,6 @@ router.post('/', auth, validateFiling, async (req, res) => {
 // Update a filing
 router.put('/:id', auth, validateFiling, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const filing = await Filing.findOne({
       where: { 
         id: req.params.id,

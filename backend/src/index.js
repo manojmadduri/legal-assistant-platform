@@ -4,6 +4,11 @@ const cors = require('cors');
 const helmet = require('helmet');
 const sequelize = require('./config/database');
 const usersRouter = require('./routes/users');
+const documentsRouter = require('./routes/documents');
+const complianceRouter = require('./routes/compliance');
+const alertsRouter = require('./routes/alerts');
+const contractsRouter = require('./routes/contracts');
+const filingsRouter = require('./routes/filings');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +37,11 @@ testDbConnection();
 
 // Routes
 app.use('/api/users', usersRouter);
+app.use('/api/documents', documentsRouter);
+app.use('/api/compliance', complianceRouter);
+app.use('/api/alerts', alertsRouter);
+app.use('/api/contracts', contractsRouter);
+app.use('/api/filings', filingsRouter);
 
 // Basic route
 app.get('/', (req, res) => {
